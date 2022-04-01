@@ -19,7 +19,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const seeAdvanced = parseInt(urlParams.get("advanced") || "0") == 1;
 
-    const modelTypes = ["imagenet-16384", "openimages-8192"];
+    const modelTypes = ["imagenet_16384", "openimages-8192"];
 </script>
 
 {#if $mode == Mode.MaskDraw && maskCanvas}

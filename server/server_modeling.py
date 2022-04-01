@@ -54,6 +54,7 @@ class ModelFactory:
                 logger.info("SETTING UP TAMING...")
                 self.taming_decoder = TamingDecoder(
                     device=device,
+                    model_name="imagenet_16384",
                     **model_params_dict,
                 )
                 self.taming_decoder.eval()

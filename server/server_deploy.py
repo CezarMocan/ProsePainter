@@ -63,7 +63,7 @@ class UserSession:
         style_prompt: str = "",
         padding_percent: float = 10.,
         num_rec_steps: int = 16,
-        model_type: str = "imagenet-16384",
+        model_type: str = "imagenet_16384",
         **kwargs,
     ) -> None:
         """
@@ -299,53 +299,54 @@ async def websocket_endpoint(websocket: WebSocket, ) -> None:
 
     run_send_loop = False
 
-    try:
-        await websocket.accept()
-        logger.info(f"WEBSOCKET CONNECTED!")
+    # try:
+    await websocket.accept()
+    logger.info(f"WEBSOCKET CONNECTED!")
 
-        global async_manager
-        if async_manager is None:
-            logger.info("SETTING UP ASYNC MANAGER...")
-            async_manager = AsyncManager()
-            run_send_loop = True
+    global async_manager
+    if async_manager is None:
+        logger.info("SETTING UP ASYNC MANAGER...")
+        async_manager = AsyncManager()
+        run_send_loop = True
 
-        global optimization_manager
-        if optimization_manager is None:
-            logger.info("SETTING UP OPTIMIZATION MANAGER...")
-            optimization_manager = OptimizationManager(async_manager, )
-            optimization_manager.start()
+    global optimization_manager
+    if optimization_manager is None:
+        logger.info("SETTING UP OPTIMIZATION MANAGER...")
+        optimization_manager = OptimizationManager(async_manager, )
+        optimization_manager.start()
+    
+    print("BEFORE USER SESSION")
+    user_session = UserSession(
+        user_id,
+        websocket,
+    )
 
-        user_session = UserSession(
-            user_id,
-            websocket,
-        )
+    user_session_task = asyncio.gather(user_session.listen_loop())
+    co_routine_list = [user_session_task]
 
-        user_session_task = asyncio.gather(user_session.listen_loop())
-        co_routine_list = [user_session_task]
+    if run_send_loop:
+        async_task = asyncio.gather(async_manager.send_loop())
+        co_routine_list.append(async_task, )
 
-        if run_send_loop:
-            async_task = asyncio.gather(async_manager.send_loop())
-            co_routine_list.append(async_task, )
+    await asyncio.wait(
+        co_routine_list,
+        return_when=asyncio.FIRST_COMPLETED,
+    )
 
-        await asyncio.wait(
-            co_routine_list,
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+    # except Exception as e:
+    #     logger.error(f"WEBSOCKET CONNECTION ERROR: {e}")
 
-    except Exception as e:
-        logger.error(f"WEBSOCKET CONNECTION ERROR: {e}")
+    # finally:
+    #     logger.info("WEBSOCKET DISCONNECTED.")
 
-    finally:
-        logger.info("WEBSOCKET DISCONNECTED.")
+    #     optimization_manager.remove_job(user_id, )
+    #     async_manager.remove_user(user_id, )
+    #     await websocket.close()
 
-        optimization_manager.remove_job(user_id, )
-        async_manager.remove_user(user_id, )
-        await websocket.close()
-
-        try:
-            user_session_task.cancel()
-        except:
-            logger.debug(f"{user_id} did not have any running task.")
+    #     try:
+    #         user_session_task.cancel()
+    #     except:
+    #         logger.debug(f"{user_id} did not have any running task.")
 
     return
 

@@ -54,7 +54,7 @@ class OptimizationManager:
                 model_params_dict={
                     "clip_model_name_list": [
                         "ViT-B/32",
-                        #"ViT-B/16",
+                        # "ViT-B/16",
                     ]
                 },
                 recompute=True,
